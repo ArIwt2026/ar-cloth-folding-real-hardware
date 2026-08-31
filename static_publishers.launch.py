@@ -24,11 +24,12 @@ def generate_launch_description():
         static('world_to_triton_snapshot', (0.098, -0.615, 0.665),
                (-0.931, 0.008, 0.023, 0.364), 'world',
                'lucid_triton_color_optical_frame'),
-        # Exact saved Easy Hand-Eye result.
-        static('kuka_base_to_triton_easy_handeye',
-               (1.39593194, 0.26242952, 0.62941687),
-               (-0.62659684, -0.67975793, 0.26630050, 0.27274458),
-               'iiwa7_link_0', 'lucid_triton_color_optical_frame'),
+        # Inverse of the saved Easy Hand-Eye result so the fixed Lucid camera
+        # remains the single parent of both robot bases in the world TF tree.
+        static('triton_to_kuka_base_calibration',
+               (-0.192917626, -0.562498374, 1.435283665),
+               (0.626596838, 0.679757928, -0.266300499, 0.272744579),
+               'lucid_triton_color_optical_frame', 'iiwa7_link_0'),
         # Panda fixed-camera calibration (inverse of panda_link0 -> Triton).
         static('triton_to_panda_base_calibration',
                (-0.69437679, 0.11547400, 0.79943691),
