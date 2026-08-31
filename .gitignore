@@ -1,0 +1,23 @@
+# Independently managed repositories/modules
+/lucid_cameras/
+/teleop_panda/
+/teleop_kuka_iiwa7/
+
+# ROS 2 build and runtime output
+/build/
+/install/
+/log/
+/**/__pycache__/
+*.pyc
+
+# Generated graphs and local runtime data
+/*.gv
+/*.pdf
+/calibration_data/
+/teach_data/
+
+# Local/editor files
+.DS_Store
+.vscode/
+.idea/
+

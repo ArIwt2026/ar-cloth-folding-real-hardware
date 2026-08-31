@@ -1,0 +1,12 @@
+apriltag:
+  ros__parameters:
+    image_transport: raw
+    qos_profile: sensor_data
+    family: 25h9
+    size: 0.07
+    max_hamming: 0
+    pose_estimation_method: pnp
+    tag:
+      ids: [24]
+      frames: [lucid_triton_tag24]
+      sizes: [0.07]

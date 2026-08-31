@@ -1,0 +1,18 @@
+[Unit]
+Description=AR Panda, KUKA and camera monitor stack
+
+[Service]
+Type=simple
+WorkingDirectory=/home/iwtros/Documents/ar
+ExecStart=/home/iwtros/Documents/ar/run_all_monitor.sh
+ExecStopPost=-/usr/bin/docker compose -f /home/iwtros/Documents/ar/teleop_panda/docker-compose.yml down --remove-orphans
+ExecStopPost=-/usr/bin/docker compose -f /home/iwtros/Documents/ar/lucid_cameras/docker-compose.yml down --remove-orphans
+KillMode=control-group
+KillSignal=SIGINT
+TimeoutStopSec=60s
+SendSIGKILL=yes
+Restart=no
+Environment=LAUNCH_RVIZ=false
+
+[Install]
+WantedBy=default.target
