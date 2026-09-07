@@ -1,0 +1,39 @@
+# Canonical KUKA D455 wrist-camera calibration.
+# Source result is preserved at:
+# calibration_data/handeye/kuka/kuka_eye_on_base/20260827_142606/result_handeye.yaml
+calibration_type: eye_in_hand
+saved_at: '2026-08-27T14:28:00.755822+00:00'
+source_run_directory: /home/iwtros/Documents/ar/calibration_data/handeye/kuka/kuka_eye_on_base/20260827_142606
+method: TSAI
+valid_samples: 12
+metrics:
+  translation_rms_m: 0.0033008000621299258
+  rotation_rms_deg: 0.39593899699023255
+  score: 3.6967390591201585
+frames:
+  robot_base: iiwa7_link_0
+  end_effector: iiwa7_link_ee
+  camera: kuka_d455_color_optical_frame
+  transform: iiwa7_link_ee -> kuka_d455_color_optical_frame
+
+# The original calibrated transform is EE -> color optical. The D455 driver
+# owns camera-link -> color-optical, so the monitor publishes the equivalent
+# EE -> camera-link transform below to keep every TF child unique.
+ee_to_camera:
+  translation_xyz_m: [-0.021040187904981845, 0.040054241137663614, 0.05426520205256456]
+  quaternion_xyzw: [0.0069869452232783884, 0.008155332711052721, 0.3872469245808054, 0.9219134951542509]
+
+published_mount:
+  parent: iiwa7_link_ee
+  child: kuka_d455_link
+  derived_from: kuka_d455_link -> kuka_d455_color_optical_frame
+  camera_link_to_color_optical:
+    translation_xyz_m: [0.0, -0.059, 0.0]
+    quaternion_xyzw: [-0.5, 0.5, -0.5, 0.5]
+  translation_xyz_m: [-0.062337038479209, -0.002079446160069, 0.054833116964160]
+  quaternion_xyzw: [0.662151348834694, -0.266749091542836, 0.647009070900363, 0.267917479030610]
+
+# Inverse transform, retained for consumers that need camera -> EE.
+camera_to_ee:
+  translation_xyz_m: [-0.01335459928220645, -0.04409972414528295, -0.05355943336442559]
+  quaternion_xyzw: [-0.0069869452232783884, -0.008155332711052721, -0.3872469245808054, 0.9219134951542509]

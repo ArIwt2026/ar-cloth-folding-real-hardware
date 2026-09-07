@@ -11,14 +11,22 @@ from tf2_ros import TransformBroadcaster
 
 class AprilTagTFPublisher(Node):
     def __init__(self):
-        super().__init__('lucid_apriltag_tf_publisher')
+        super().__init__('custom_apriltag_tf_publisher')
         self.bridge = CvBridge()
         self.info = None
         self.tf = TransformBroadcaster(self)
-        self.sub_info = self.create_subscription(CameraInfo, '/lucid/triton/camera_info', self.info_cb, qos_profile_sensor_data)
-        self.sub_image = self.create_subscription(Image, '/lucid/triton/image_color', self.image_cb, qos_profile_sensor_data)
+        self.image_topic = str(self.declare_parameter('image_topic', '/lucid/triton/image_color').value)
+        self.info_topic = str(self.declare_parameter('camera_info_topic', '/lucid/triton/camera_info').value)
+        self.camera_frame = str(self.declare_parameter('camera_frame', '').value)
+        self.tag_id = int(self.declare_parameter('tag_id', 24).value)
+        self.tag_frame = str(self.declare_parameter('tag_frame', 'lucid_triton_tag24').value)
+        self.marker_size = float(self.declare_parameter('marker_size', 0.07).value)
+        self.sub_info = self.create_subscription(CameraInfo, self.info_topic, self.info_cb, qos_profile_sensor_data)
+        self.sub_image = self.create_subscription(Image, self.image_topic, self.image_cb, qos_profile_sensor_data)
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_25h9)
-        self.get_logger().info('Publishing lucid_triton_tag24 from Lucid images')
+        self.get_logger().info(
+            f'Publishing {self.tag_frame} from {self.image_topic} '
+            f'(camera_info={self.info_topic}, tag_id={self.tag_id}, size={self.marker_size:.3f} m)')
 
     def info_cb(self, msg):
         self.info = msg
@@ -35,14 +43,16 @@ class AprilTagTFPublisher(Node):
         found = None
         for source in (255 - image, image):
             corners, ids, _ = cv2.aruco.detectMarkers(source, self.dictionary, parameters=params)
-            if ids is not None and 24 in ids.flatten():
-                found = corners[list(ids.flatten()).index(24)]
+            if ids is not None and self.tag_id in ids.flatten():
+                found = corners[list(ids.flatten()).index(self.tag_id)]
                 break
         if found is None:
             return
         k = np.asarray(self.info.k, dtype=np.float64).reshape(3, 3)
         d = np.asarray(self.info.d, dtype=np.float64)
-        obj = np.array([[-.035,.035,0],[.035,.035,0],[.035,-.035,0],[-.035,-.035,0]], dtype=np.float64)
+        half = self.marker_size / 2.0
+        obj = np.array([[-half, half, 0], [half, half, 0],
+                        [half, -half, 0], [-half, -half, 0]], dtype=np.float64)
         ok, rvec, tvec = cv2.solvePnP(obj, found.reshape(4,2), k, d, flags=cv2.SOLVEPNP_IPPE_SQUARE)
         if not ok: return
         R, _ = cv2.Rodrigues(rvec); q = self.rot_to_quat(R)
@@ -51,8 +61,8 @@ class AprilTagTFPublisher(Node):
         # the ROS clock domain. TF consumers such as easy_handeye2 query at
         # current ROS time, so stamp this live measurement with ROS now.
         out.header.stamp = self.get_clock().now().to_msg()
-        out.header.frame_id = self.info.header.frame_id or msg.header.frame_id
-        out.child_frame_id = 'lucid_triton_tag24'
+        out.header.frame_id = self.camera_frame or self.info.header.frame_id or msg.header.frame_id
+        out.child_frame_id = self.tag_frame
         out.transform.translation.x, out.transform.translation.y, out.transform.translation.z = [float(x) for x in tvec.flat]
         out.transform.rotation.x, out.transform.rotation.y, out.transform.rotation.z, out.transform.rotation.w = q
         self.tf.sendTransform(out)

@@ -12,19 +12,26 @@ from wsg50_msgs.msg import State as WsgState
 
 try:
     from franka_msgs.action import Move as PandaMove
+    from franka_msgs.action import Grasp as PandaGrasp
 except ImportError:
     PandaMove = None
+    PandaGrasp = None
 
 
 class GripperButtonBridge(Node):
     """Translate Arduino AA/state/55 packets into non-blocking gripper actions."""
 
     def __init__(self):
-        super().__init__('gripper_button_bridge')
-        self.declare_parameter('serial_device', '/dev/ttyACM0')
+        super().__init__('button_bridge')
+        self.declare_parameter(
+            'serial_device',
+            '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_95635333031351704032-if00')
         self.declare_parameter('baudrate', 115200)
-        self.declare_parameter('panda_open_width', 0.08)
-        self.declare_parameter('panda_speed', 0.05)
+        self.declare_parameter('panda_open_width', 0.05)
+        # Panda uses one speed for both opening and closing. Match the WSG50
+        # opening speed; the WSG50 close speed remains separately configurable.
+        self.declare_parameter('panda_speed', 0.420)
+        self.declare_parameter('panda_force', 20.0)
         # WSG50 targets: closed-to-zero (may stop on an object) and 50 mm open.
         self.declare_parameter('wsg_open_width', 0.05)
         self.declare_parameter('wsg_speed', 0.420)
@@ -35,17 +42,20 @@ class GripperButtonBridge(Node):
         # Match the Arduino debounce. Do not add a long ROS-side dead time:
         # consecutive valid press/release cycles must all be preserved.
         self._press_guard_s = 0.02
-        self.declare_parameter('wsg_command_action', '/wsg50_gripper_driver/command')
-        self.declare_parameter('wsg_stop_service', '/wsg50_gripper_driver/stop')
+        self.declare_parameter('wsg_command_action', '/wsg50/driver/command')
+        self.declare_parameter('wsg_stop_service', '/wsg50/driver/stop')
         self._panda_open = True
         self._wsg_open = True
         self._wsg_holding_object = False
         self._wsg_last_command_open = None
         self._wsg_result_event = None
-        self._panda = ActionClient(self, PandaMove, '/panda/panda_gripper/move') if PandaMove else None
+        self._panda_move = ActionClient(self, PandaMove, '/panda/panda_gripper/move') if PandaMove else None
+        self._panda_grasp = ActionClient(self, PandaGrasp, '/panda/panda_gripper/grasp') if PandaGrasp else None
         self._wsg = ActionClient(
             self, WsgCommand, self.get_parameter('wsg_command_action').value)
         self._panda_stop = self.create_client(Trigger, '/panda/panda_gripper/stop') if PandaMove else None
+        self._gravity_toggle = self.create_client(
+            Trigger, '/panda/gravity_compensation/toggle')
         self._wsg_stop = self.create_client(
             Trigger, self.get_parameter('wsg_stop_service').value)
         self._event_id = 0
@@ -95,6 +105,14 @@ class GripperButtonBridge(Node):
                                 2: (('WSG50', 0x02, self._wsg_button),),
                                 3: (('PANDA', 0x01, self._panda_button),
                                     ('WSG50', 0x02, self._wsg_button))}.get(new_state)
+                    if new_state in (4, 5):
+                        button_name = 'PANDA' if new_state == 4 else 'WSG50'
+                        self.get_logger().info(
+                            f'DOUBLE_PRESS button={button_name} event={new_state}')
+                        if new_state == 4:
+                            self._toggle_gravity_compensation()
+                        state = 0
+                        continue
                     if handlers is None:
                         self.get_logger().warn(
                             f'IGNORED packet={new_state} reason=invalid_event_code')
@@ -137,18 +155,45 @@ class GripperButtonBridge(Node):
             self._wsg_open = message.width >= open_width * 0.5
 
     def _panda_button(self):
-        if self._panda is None:
+        if self._panda_move is None or self._panda_grasp is None:
             self.get_logger().error('Panda interfaces are not available in this ROS environment')
             return
         self._panda_open = not self._panda_open
-        if not self._panda.wait_for_server(timeout_sec=0.2):
-            self.get_logger().error('Panda move action is unavailable')
+        panda_client = self._panda_move if self._panda_open else self._panda_grasp
+        if not panda_client.wait_for_server(timeout_sec=0.2):
+            self.get_logger().error(
+                f'Panda action is unavailable: {"move" if self._panda_open else "grasp"}')
             return
         self._stop(self._panda_stop, 'Panda')
-        goal = PandaMove.Goal()
-        goal.width = float(self.get_parameter('panda_open_width').value) if self._panda_open else 0.0
-        goal.speed = float(self.get_parameter('panda_speed').value)
-        self._panda.send_goal_async(goal)
+        if self._panda_open:
+            goal = PandaMove.Goal()
+            goal.width = float(self.get_parameter('panda_open_width').value)
+            goal.speed = float(self.get_parameter('panda_speed').value)
+        else:
+            goal = PandaGrasp.Goal()
+            goal.width = 0.0
+            goal.speed = float(self.get_parameter('panda_speed').value)
+            goal.force = float(self.get_parameter('panda_force').value)
+        panda_client.send_goal_async(goal)
+
+    def _toggle_gravity_compensation(self):
+        if not self._gravity_toggle.wait_for_service(timeout_sec=0.2):
+            self.get_logger().error(
+                'Gravity toggle service unavailable: '
+                '/panda/gravity_compensation/toggle')
+            return
+        future = self._gravity_toggle.call_async(Trigger.Request())
+        future.add_done_callback(self._gravity_toggle_result)
+
+    def _gravity_toggle_result(self, future):
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info(f'GRAVITY_TOGGLE success: {response.message}')
+            else:
+                self.get_logger().error(f'GRAVITY_TOGGLE failed: {response.message}')
+        except Exception as exc:
+            self.get_logger().error(f'GRAVITY_TOGGLE service error: {exc}')
 
     def _wsg_button(self):
         if not self._wsg.wait_for_server(timeout_sec=0.2):

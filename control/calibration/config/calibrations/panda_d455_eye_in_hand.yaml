@@ -1,0 +1,15 @@
+# Canonical Panda D455 eye-in-hand calibration.
+# Original Easy Handeye result:
+# ~/.ros2/easy_handeye2/calibrations/panda_d455_eye_in_hand.calib
+calibration_type: eye_in_hand
+source_result: /home/iwtros/.ros2/easy_handeye2/calibrations/panda_d455_eye_in_hand.calib
+method: Tsai-Lenz
+frames:
+  robot_base: panda_link0
+  end_effector: panda_link8
+  tracking_base: panda_d455_link
+  tracking_marker: panda_d455_tag24
+  calibrated_transform: panda_link8 -> panda_d455_link
+transform:
+  translation_xyz_m: [0.05006900349042004, 0.015266267172393305, 0.07409719296917006]
+  quaternion_xyzw: [-0.26623178107864587, -0.6453999784702183, -0.2837929078727779, 0.6572983279877153]

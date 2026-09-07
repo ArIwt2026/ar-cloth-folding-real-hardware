@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>gripper_button_bridge</name>
+  <name>button_bridge</name>
   <version>0.1.0</version>
   <description>Arduino button bridge for Panda and WSG50 grippers.</description>
   <maintainer email="robotics@example.com">robotics</maintainer>

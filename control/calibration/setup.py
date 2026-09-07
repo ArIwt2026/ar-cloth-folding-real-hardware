@@ -33,6 +33,21 @@ setup(
                 "config/jobs/temp_sequence_debug.yaml",
             ],
         ),
+        (
+            f"share/{package_name}/config",
+            [
+                "config/apriltag_lucid_25h9.yaml",
+                "config/apriltag_panda_d455.yaml",
+                "config/apriltag_kuka_d455.yaml",
+            ],
+        ),
+        (
+            f"share/{package_name}/config/calibrations",
+            [
+                "config/calibrations/kuka_d455_eye_in_hand.yaml",
+                "config/calibrations/panda_d455_eye_in_hand.yaml",
+            ],
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
