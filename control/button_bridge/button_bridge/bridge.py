@@ -54,10 +54,12 @@ class GripperButtonBridge(Node):
         self._wsg = ActionClient(
             self, WsgCommand, self.get_parameter('wsg_command_action').value)
         self._panda_stop = self.create_client(Trigger, '/panda/panda_gripper/stop') if PandaMove else None
-        self._gravity_toggle = self.create_client(
-            Trigger, '/panda/gravity_compensation/toggle')
+        self._panda_impedance_toggle = self.create_client(
+            Trigger, '/panda/joint_impedance/toggle')
         self._wsg_stop = self.create_client(
             Trigger, self.get_parameter('wsg_stop_service').value)
+        self._fri_toggle = self.create_client(
+            Trigger, '/fri/mediaflange_output1/toggle')
         self._event_id = 0
         self._events = queue.Queue()
         self._command_busy = {0x01: False, 0x02: False}
@@ -110,7 +112,9 @@ class GripperButtonBridge(Node):
                         self.get_logger().info(
                             f'DOUBLE_PRESS button={button_name} event={new_state}')
                         if new_state == 4:
-                            self._toggle_gravity_compensation()
+                            self._toggle_panda_impedance()
+                        elif new_state == 5:
+                            self._toggle_fri_output()
                         state = 0
                         continue
                     if handlers is None:
@@ -176,31 +180,56 @@ class GripperButtonBridge(Node):
             goal.force = float(self.get_parameter('panda_force').value)
         panda_client.send_goal_async(goal)
 
-    def _toggle_gravity_compensation(self):
-        if not self._gravity_toggle.wait_for_service(timeout_sec=0.2):
+    def _toggle_panda_impedance(self):
+        if not self._panda_impedance_toggle.wait_for_service(timeout_sec=0.2):
             self.get_logger().error(
-                'Gravity toggle service unavailable: '
-                '/panda/gravity_compensation/toggle')
+                'Panda impedance toggle service unavailable: '
+                '/panda/joint_impedance/toggle')
             return
-        future = self._gravity_toggle.call_async(Trigger.Request())
-        future.add_done_callback(self._gravity_toggle_result)
+        future = self._panda_impedance_toggle.call_async(Trigger.Request())
+        future.add_done_callback(self._panda_impedance_toggle_result)
 
-    def _gravity_toggle_result(self, future):
+    def _panda_impedance_toggle_result(self, future):
         try:
             response = future.result()
             if response.success:
-                self.get_logger().info(f'GRAVITY_TOGGLE success: {response.message}')
+                self.get_logger().info(f'PANDA_IMPEDANCE_TOGGLE success: {response.message}')
             else:
-                self.get_logger().error(f'GRAVITY_TOGGLE failed: {response.message}')
+                self.get_logger().error(f'PANDA_IMPEDANCE_TOGGLE failed: {response.message}')
         except Exception as exc:
-            self.get_logger().error(f'GRAVITY_TOGGLE service error: {exc}')
+            self.get_logger().error(f'PANDA_IMPEDANCE_TOGGLE service error: {exc}')
 
     def _wsg_button(self):
+        # Single WSG50 presses control the WSG50 only.
+        # The double press is reserved for the FRI Boolean output.
         if not self._wsg.wait_for_server(timeout_sec=0.2):
             self.get_logger().error(
                 f'COMMAND_FAILED reason=action_unavailable '
                 f'action={self.get_parameter("wsg_command_action").value}')
             return
+
+        self._run_wsg_button()
+
+    def _toggle_fri_output(self):
+        if not self._fri_toggle.wait_for_service(timeout_sec=0.2):
+            self.get_logger().error(
+                'FRI toggle service unavailable: '
+                '/fri/mediaflange_output1/toggle')
+            return
+        future = self._fri_toggle.call_async(Trigger.Request())
+        future.add_done_callback(self._fri_toggle_result)
+
+    def _fri_toggle_result(self, future):
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info(response.message)
+            else:
+                self.get_logger().error(response.message)
+        except Exception as error:
+            self.get_logger().error(f'FRI toggle failed: {error}')
+
+    def _run_wsg_button(self):
         if self._wsg_state is not None:
             if not self._wsg_state.connected or not self._wsg_state.referenced:
                 self.get_logger().error(

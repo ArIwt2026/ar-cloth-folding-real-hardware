@@ -9,9 +9,9 @@ from std_srvs.srv import Trigger
 class PandaControllerSwitcher(Node):
     def __init__(self):
         super().__init__('panda_controller_switcher')
-        self._gravity_active = False
+        self._zero_impedance_active = False
         self._service = self.create_service(
-            Trigger, '/panda/gravity_compensation/toggle', self._toggle)
+            Trigger, '/panda/joint_impedance/toggle', self._toggle)
 
     def _control(self, args):
         command = ['ros2', 'control', *args, '-c', '/panda/controller_manager']
@@ -38,24 +38,24 @@ class PandaControllerSwitcher(Node):
 
     def _toggle(self, _request, response):
         try:
-            if not self._gravity_active:
-                self._ensure_loaded('gravity_compensation_example_controller')
+            if not self._zero_impedance_active:
+                self._ensure_loaded('joint_impedance_zero_controller')
                 result = self._control([
                     'switch_controllers',
                     '--deactivate', 'joint_impedance_hold_controller',
-                    '--activate', 'gravity_compensation_example_controller',
+                    '--activate', 'joint_impedance_zero_controller',
                     '--strict'])
-                message = 'Gravity compensation activated.'
+                message = 'Zero joint impedance activated.'
             else:
                 result = self._control([
                     'switch_controllers',
-                    '--deactivate', 'gravity_compensation_example_controller',
+                    '--deactivate', 'joint_impedance_zero_controller',
                     '--activate', 'joint_impedance_hold_controller',
                     '--strict'])
-                message = 'Hold controller activated.'
+                message = 'High joint impedance activated.'
             if result.returncode != 0:
                 raise RuntimeError((result.stdout + result.stderr).strip())
-            self._gravity_active = not self._gravity_active
+            self._zero_impedance_active = not self._zero_impedance_active
             response.success = True
             response.message = message
         except Exception as exc:

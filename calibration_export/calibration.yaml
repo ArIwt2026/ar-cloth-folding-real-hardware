@@ -1,0 +1,58 @@
+# Canonical calibration export for simulation.
+# All transforms are parent -> child.
+# Translation: metres. Quaternion: x, y, z, w.
+
+version: 1
+source: ../static_publishers.launch.py
+world_frame: world
+world_definition: frozen table AprilTag snapshot
+anchor_frame: lucid_triton_color_optical_frame
+
+transforms:
+  - name: panda_d455_handeye_tf
+    parent: panda_link8
+    child: panda_d455_link
+    translation_xyz_m: [0.05006900349042004, 0.015266267172393305, 0.07409719296917006]
+    quaternion_xyzw: [-0.26623178107864587, -0.6453999784702183, -0.2837929078727779, 0.6572983279877153]
+
+  - name: world_to_triton_snapshot
+    parent: world
+    child: lucid_triton_color_optical_frame
+    translation_xyz_m: [0.098, -0.615, 0.665]
+    quaternion_xyzw: [-0.931, 0.008, 0.023, 0.364]
+    note: frozen table-tag snapshot; current temporary world reference
+
+  - name: triton_to_kuka_base_calibration
+    parent: lucid_triton_color_optical_frame
+    child: iiwa7_link_0
+    translation_xyz_m: [-0.19753837, -0.61974747, 1.44356388]
+    quaternion_xyzw: [-0.64941709, -0.66851211, 0.26902736, -0.24284415]
+
+  - name: triton_to_panda_base_calibration
+    parent: lucid_triton_color_optical_frame
+    child: panda_link0
+    translation_xyz_m: [-0.69437679, 0.11547400, 0.79943691]
+    quaternion_xyzw: [0.93696988, 0.00547817, -0.01887198, 0.34885711]
+
+  - name: kuka_d455_handeye_tf
+    parent: iiwa7_link_ee
+    child: kuka_d455_link
+    translation_xyz_m: [-0.062337038479209, -0.002079446160069, 0.054833116964160]
+    quaternion_xyzw: [0.662151348834694, -0.266749091542836, 0.647009070900363, 0.267917479030610]
+
+  - name: triton_to_helios_calibration
+    parent: lucid_triton_color_optical_frame
+    child: lucid_helios_depth_optical_frame
+    translation_xyz_m: [0.0000009951439060323613, 0.05077449722769215, 0.00559786378091818]
+    quaternion_xyzw: [-0.0011389760097307374, 0.006276698810241969, 0.0002837177313983205, 0.9999796124371455]
+    source: ../lucid_cameras/docker/publish_calibration.py
+    source_rotation_vector: [-0.0022779675002177128, 0.012553482932240666, 0.00056743931903681]
+    source_translation_mm: [0.0009951439060323613, 50.77449722769215, 5.59786378091818]
+
+camera_driver_transforms:
+  - parent: kuka_d455_link
+    child: kuka_d455_color_optical_frame
+    source: RealSense driver
+  - parent: panda_d455_link
+    child: panda_d455_color_optical_frame
+    source: RealSense driver
