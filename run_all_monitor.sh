@@ -149,7 +149,8 @@ set -u
 echo "Starting master ROS launch..."
 RUN_ID="$BOOT_ID-$$-$(date +%s%N)"
 AR_MONITOR_RUN_ID="$RUN_ID" setsid ros2 launch \
-  "$AR_ROOT/master_system.launch.py" "launch_rviz:=$LAUNCH_RVIZ" 9>&- &
+  "$AR_ROOT/master_system.launch.py" "launch_rviz:=$LAUNCH_RVIZ" \
+  "panda_control_mode:=direct" 9>&- &
 MONITOR_PID=$!
 # setsid makes the child PID the process-group ID. Record it immediately so an
 # abrupt supervisor failure cannot occur between launch and crash recovery.
