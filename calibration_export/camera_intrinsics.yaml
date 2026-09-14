@@ -1,0 +1,150 @@
+# CameraInfo captured from the running ROS 2 graph.
+# Helios is intentionally omitted: it currently publishes image_raw without
+# a camera_info topic.
+
+cameras:
+  lucid_triton:
+    topic: /lucid/triton/camera_info
+    frame_id: lucid_triton_color_optical_frame
+    image_topic: /lucid/triton/image_color
+    width: 2048
+    height: 1536
+    distortion_model: plumb_bob
+    camera_matrix:
+      rows: 3
+      cols: 3
+      data: [1756.1839799276347, 0.0, 1000.549034385331,
+             0.0, 1753.5095468341844, 774.6422756242935,
+             0.0, 0.0, 1.0]
+    distortion_coefficients:
+      rows: 1
+      cols: 5
+      data: [-0.25868894455663544, 0.107732371168495,
+             0.000022764054268830472, -0.0012015402613801882,
+             0.010515745128515037]
+    rectification_matrix:
+      rows: 3
+      cols: 3
+      data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    projection_matrix:
+      rows: 3
+      cols: 4
+      data: [1756.1839799276347, 0.0, 1000.549034385331, 0.0,
+             0.0, 1753.5095468341844, 774.6422756242935, 0.0,
+             0.0, 0.0, 1.0, 0.0]
+
+  panda_d455_color:
+    topic: /panda/d455/color/camera_info
+    frame_id: panda_d455_color_optical_frame
+    image_topic: /panda/d455/color/image_raw
+    width: 848
+    height: 480
+    distortion_model: plumb_bob
+    camera_matrix:
+      rows: 3
+      cols: 3
+      data: [419.90679931640625, 0.0, 419.4134826660156,
+             0.0, 419.4909973144531, 248.78778076171875,
+             0.0, 0.0, 1.0]
+    distortion_coefficients:
+      rows: 1
+      cols: 5
+      data: [-0.05751587823033333, 0.06541036814451218,
+             0.0007068647537380457, 0.0013373738620430231,
+             -0.020299959927797318]
+    rectification_matrix:
+      rows: 3
+      cols: 3
+      data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    projection_matrix:
+      rows: 3
+      cols: 4
+      data: [419.90679931640625, 0.0, 419.4134826660156, 0.0,
+             0.0, 419.4909973144531, 248.78778076171875, 0.0,
+             0.0, 0.0, 1.0, 0.0]
+
+  kuka_d455_color:
+    topic: /iiwa7/d455/color/camera_info
+    frame_id: kuka_d455_color_optical_frame
+    image_topic: /iiwa7/d455/color/image_raw
+    width: 848
+    height: 480
+    distortion_model: plumb_bob
+    camera_matrix:
+      rows: 3
+      cols: 3
+      data: [422.7038269042969, 0.0, 421.86566162109375,
+             0.0, 422.21600341796875, 253.2716827392578,
+             0.0, 0.0, 1.0]
+    distortion_coefficients:
+      rows: 1
+      cols: 5
+      data: [-0.058612823486328125, 0.06627508997917175,
+             0.00043052787077613175, 0.0005934089422225952,
+             -0.021202463656663895]
+    rectification_matrix:
+      rows: 3
+      cols: 3
+      data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    projection_matrix:
+      rows: 3
+      cols: 4
+      data: [422.7038269042969, 0.0, 421.86566162109375, 0.0,
+             0.0, 422.21600341796875, 253.2716827392578, 0.0,
+             0.0, 0.0, 1.0, 0.0]
+
+  panda_d455_depth:
+    topic: /panda/d455/depth/camera_info
+    frame_id: panda_d455_depth_optical_frame
+    image_topic: /panda/d455/depth/image_rect_raw
+    width: 848
+    height: 480
+    distortion_model: plumb_bob
+    camera_matrix:
+      rows: 3
+      cols: 3
+      data: [423.6229248046875, 0.0, 426.17169189453125,
+             0.0, 423.6229248046875, 238.06170654296875,
+             0.0, 0.0, 1.0]
+    distortion_coefficients:
+      rows: 1
+      cols: 5
+      data: [0.0, 0.0, 0.0, 0.0, 0.0]
+    rectification_matrix:
+      rows: 3
+      cols: 3
+      data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    projection_matrix:
+      rows: 3
+      cols: 4
+      data: [423.6229248046875, 0.0, 426.17169189453125, 0.0,
+             0.0, 423.6229248046875, 238.06170654296875, 0.0,
+             0.0, 0.0, 1.0, 0.0]
+
+  kuka_d455_depth:
+    topic: /iiwa7/d455/depth/camera_info
+    frame_id: kuka_d455_depth_optical_frame
+    image_topic: /iiwa7/d455/depth/image_rect_raw
+    width: 848
+    height: 480
+    distortion_model: plumb_bob
+    camera_matrix:
+      rows: 3
+      cols: 3
+      data: [428.38800048828125, 0.0, 424.3700256347656,
+             0.0, 428.38800048828125, 236.54051208496094,
+             0.0, 0.0, 1.0]
+    distortion_coefficients:
+      rows: 1
+      cols: 5
+      data: [0.0, 0.0, 0.0, 0.0, 0.0]
+    rectification_matrix:
+      rows: 3
+      cols: 3
+      data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    projection_matrix:
+      rows: 3
+      cols: 4
+      data: [428.38800048828125, 0.0, 424.3700256347656, 0.0,
+             0.0, 428.38800048828125, 236.54051208496094, 0.0,
+             0.0, 0.0, 1.0, 0.0]

@@ -1,0 +1,33 @@
+# Joint-position snapshot captured from the running ROS 2 graph.
+# Angles are in radians.
+
+robots:
+  panda:
+    topic: /panda/joint_states
+    names:
+      - panda_joint1
+      - panda_joint2
+      - panda_joint3
+      - panda_joint4
+      - panda_joint5
+      - panda_joint6
+      - panda_joint7
+    positions: [0.7726604687983833, -0.02698331172737788,
+                 -0.6552638075853648, -2.404250125821969,
+                 -0.2251497765779495, 2.487909755282932,
+                 1.160365205582418]
+
+  kuka_iiwa7:
+    topic: /iiwa7/joint_states
+    names:
+      - iiwa7_A1
+      - iiwa7_A2
+      - iiwa7_A3
+      - iiwa7_A4
+      - iiwa7_A5
+      - iiwa7_A6
+      - iiwa7_A7
+    positions: [0.17647130695623656, 0.41772579853870695,
+                 -0.10310232414066697, -1.7570889458273833,
+                 -0.13397299251766567, 0.916426428067202,
+                 0.9196531805709843]
