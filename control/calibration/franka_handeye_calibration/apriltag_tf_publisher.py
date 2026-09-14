@@ -21,28 +21,37 @@ class AprilTagTFPublisher(Node):
         self.tag_id = int(self.declare_parameter('tag_id', 24).value)
         self.tag_frame = str(self.declare_parameter('tag_frame', 'lucid_triton_tag24').value)
         self.marker_size = float(self.declare_parameter('marker_size', 0.07).value)
+        self.max_rate = float(self.declare_parameter('max_rate', 10.0).value)
+        self.min_interval = 1.0 / self.max_rate if self.max_rate > 0.0 else 0.0
+        self.last_process_time = 0.0
+        self.detector_params = cv2.aruco.DetectorParameters_create()
+        self.detector_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         self.sub_info = self.create_subscription(CameraInfo, self.info_topic, self.info_cb, qos_profile_sensor_data)
         self.sub_image = self.create_subscription(Image, self.image_topic, self.image_cb, qos_profile_sensor_data)
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_25h9)
         self.get_logger().info(
             f'Publishing {self.tag_frame} from {self.image_topic} '
-            f'(camera_info={self.info_topic}, tag_id={self.tag_id}, size={self.marker_size:.3f} m)')
+            f'(camera_info={self.info_topic}, tag_id={self.tag_id}, size={self.marker_size:.3f} m, max_rate={self.max_rate} Hz)')
 
     def info_cb(self, msg):
         self.info = msg
 
     def image_cb(self, msg):
+        if self.min_interval > 0.0:
+            now_sec = self.get_clock().now().nanoseconds * 1e-9
+            if (now_sec - self.last_process_time) < self.min_interval:
+                return
+            self.last_process_time = now_sec
+
         if self.info is None or self.info.width != msg.width or self.info.height != msg.height:
             return
         try:
             image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
         except Exception:
             return
-        params = cv2.aruco.DetectorParameters_create()
-        params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         found = None
         for source in (255 - image, image):
-            corners, ids, _ = cv2.aruco.detectMarkers(source, self.dictionary, parameters=params)
+            corners, ids, _ = cv2.aruco.detectMarkers(source, self.dictionary, parameters=self.detector_params)
             if ids is not None and self.tag_id in ids.flatten():
                 found = corners[list(ids.flatten()).index(self.tag_id)]
                 break
