@@ -1,12 +1,8 @@
-# Independently managed repositories/modules
-/lucid_cameras/
-/teleop_panda/
-/teleop_kuka_iiwa7/
-
 # ROS 2 build and runtime output
 /build/
 /install/
 /log/
+/teleop_kuka_iiwa7/ros2_ws/
 /**/__pycache__/
 *.pyc
 

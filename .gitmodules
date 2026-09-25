@@ -1,0 +1,12 @@
+[submodule "lucid_cameras"]
+	path = lucid_cameras
+	url = git@github.com:ArIwt2026/lucid_cameras.git
+[submodule "teleop_panda"]
+	path = teleop_panda
+	url = git@github.com:ArIwt2026/teleop_panda.git
+[submodule "teleop_kuka_iiwa7/kuka-iiwa-fri-teleoperation"]
+	path = teleop_kuka_iiwa7/kuka-iiwa-fri-teleoperation
+	url = git@github.com:ArIwt2026/kuka-iiwa-fri-teleoperation.git
+[submodule "teleop_kuka_iiwa7/wsg50_ros"]
+	path = teleop_kuka_iiwa7/wsg50_ros
+	url = git@github.com:LernFabrik/WSG50_ros2_humble.git
