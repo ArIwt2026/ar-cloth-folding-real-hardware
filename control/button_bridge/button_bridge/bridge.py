@@ -32,12 +32,13 @@ class GripperButtonBridge(Node):
         # opening speed; the WSG50 close speed remains separately configurable.
         self.declare_parameter('panda_speed', 0.420)
         self.declare_parameter('panda_force', 20.0)
-        # WSG50 targets: closed-to-zero (may stop on an object) and 50 mm open.
+        # This gripper's mechanical closed position is 7.8 mm; zero is unreachable.
+        self.declare_parameter('wsg_closed_width', 0.0078)
         self.declare_parameter('wsg_open_width', 0.05)
         self.declare_parameter('wsg_speed', 0.420)
         self.declare_parameter('wsg_close_speed', 0.210)
         self.declare_parameter('wsg_acceleration', 5.0)
-        self.declare_parameter('wsg_force', 40.0)  # 50% of the 5-80 N range, rounded safely.
+        self.declare_parameter('wsg_force', 70.0)  # Stronger cloth grasp; within the 5-80 N range.
         self._last_press_time = {0x01: 0.0, 0x02: 0.0}
         # Match the Arduino debounce. Do not add a long ROS-side dead time:
         # consecutive valid press/release cycles must all be preserved.
@@ -68,7 +69,7 @@ class GripperButtonBridge(Node):
         # deliberately ignored. The next press after completion is accepted.
         self._wsg_state = None
         self._wsg_state_sub = self.create_subscription(
-            WsgState, '/wsg50_gripper_driver/state', self._wsg_state_callback, 10)
+            WsgState, '/wsg50/driver/state', self._wsg_state_callback, 10)
         self._event_timer = self.create_timer(0.01, self._process_events)
         self._serial = None
         self._reader = None
@@ -153,10 +154,11 @@ class GripperButtonBridge(Node):
     def _wsg_state_callback(self, message):
         self._wsg_state = message
         if message.connected and message.referenced:
-            # The WSG is considered open when its actual opening is above the
-            # midpoint between closed and the configured open target.
+            # Classify open/closed using the midpoint between the measured
+            # mechanical closed position and the configured open target.
+            closed_width = float(self.get_parameter('wsg_closed_width').value)
             open_width = float(self.get_parameter('wsg_open_width').value)
-            self._wsg_open = message.width >= open_width * 0.5
+            self._wsg_open = message.width >= (closed_width + open_width) * 0.5
 
     def _panda_button(self):
         if self._panda_move is None or self._panda_grasp is None:
@@ -237,17 +239,18 @@ class GripperButtonBridge(Node):
                     f'referenced={self._wsg_state.referenced} '
                     f'width={self._wsg_state.width:.3f}')
                 return
+            closed_width = float(self.get_parameter('wsg_closed_width').value)
             open_width = float(self.get_parameter('wsg_open_width').value)
-            current_open = self._wsg_state.width >= open_width * 0.5
+            current_open = self._wsg_state.width >= (closed_width + open_width) * 0.5
         else:
             current_open = self._wsg_open
-        # A stalled GRASP means the object stopped the jaws. The next button
-        # press must release it, never issue another zero-width grasp.
+        # A stalled GRASP means contact stopped the jaws. The next button
+        # press must release it rather than issue another close command.
         next_open = self._wsg_holding_object or not current_open
         self._wsg_last_command_open = next_open
         self.get_logger().info(
             f'WSG50 command: action={"MOVE_OPEN" if self._wsg_holding_object else "MOVE/GRASP"} '
-            f'width={float(self.get_parameter("wsg_open_width").value) if next_open else 0.0:.3f} '
+            f'width={float(self.get_parameter("wsg_open_width").value) if next_open else float(self.get_parameter("wsg_closed_width").value):.4f} '
             f'holding_object={self._wsg_holding_object}')
         # Do not stop immediately before a normal command. The bridge is
         # blocking, so no prior WSG motion is active here; issuing stop and
@@ -255,19 +258,21 @@ class GripperButtonBridge(Node):
         # with "access denied". Keep the stop service for explicit emergency
         # handling only.
         goal = WsgCommand.Goal()
-        # Opening is a position move; closing is a force-limited grasp so an
-        # object may stop the jaws before they reach zero width.
+        # Opening is a position move; closing is a force-limited grasp to the
+        # gripper's mechanical closed position. An object may stop it earlier.
         # Release a grasp with an explicit position move. The WSG RELEASE
         # command can be denied when the jaws stopped at an arbitrary object
         # width; MOVE to the configured opening is deterministic.
         goal.mode = WsgCommand.Goal.MOVE if next_open else WsgCommand.Goal.GRASP
-        goal.width = float(self.get_parameter('wsg_open_width').value) if next_open else 0.0
+        goal.width = float(
+            self.get_parameter('wsg_open_width').value if next_open else
+            self.get_parameter('wsg_closed_width').value)
         goal.speed = float(
             self.get_parameter('wsg_speed').value if next_open else
             self.get_parameter('wsg_close_speed').value)
         goal.acceleration = float(self.get_parameter('wsg_acceleration').value)
         goal.force = float(self.get_parameter('wsg_force').value)
-        # A close command targets zero, but the WSG must stop safely on contact.
+        # Stop safely if the jaws encounter contact before reaching the target.
         goal.stop_on_block = not next_open
         result_event = threading.Event()
         self._wsg_result_event = result_event
