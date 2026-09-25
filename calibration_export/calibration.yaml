@@ -7,6 +7,18 @@ source: ../static_publishers.launch.py
 world_frame: world
 world_definition: frozen table AprilTag snapshot
 anchor_frame: lucid_triton_color_optical_frame
+table_dimensions_m: [0.70, 1.20]
+table_negative_x_extent_m: 0.70
+ground_reference:
+  height_z_m: -0.890
+  note: current KUKA tag Z height in world frame, used as ground reference
+
+table_origin_measurements:
+  - name: kuka_d455_tag24_current_world_position
+    parent: world
+    child: kuka_d455_tag24
+    translation_xyz_m: [0.106, 0.511, 0.018]
+    note: current XYZ measurement expressed in world frame; tag is placed at the table origin
 
 transforms:
   - name: panda_d455_handeye_tf
@@ -18,21 +30,25 @@ transforms:
   - name: world_to_triton_snapshot
     parent: world
     child: lucid_triton_color_optical_frame
-    translation_xyz_m: [0.098, -0.615, 0.665]
-    quaternion_xyzw: [-0.931, 0.008, 0.023, 0.364]
+    translation_xyz_m: [0.48742056, -0.02957435, 0.76378568]
+    quaternion_xyzw: [0.66195830, 0.60796170, -0.30698066, -0.31298028]
     note: frozen table-tag snapshot; current temporary world reference
 
   - name: triton_to_kuka_base_calibration
     parent: lucid_triton_color_optical_frame
     child: iiwa7_link_0
-    translation_xyz_m: [-0.19753837, -0.61974747, 1.44356388]
-    quaternion_xyzw: [-0.64941709, -0.66851211, 0.26902736, -0.24284415]
+    translation_xyz_m: [0.85142967, 0.10649739, 1.18792187]
+    quaternion_xyzw: [0.03935360, 0.87338426, -0.48511301, -0.01779319]
+    source_calibration: ~/.ros2/easy_handeye2/calibrations/kuka_lucid_eye_on_base_20260925.calib
+    method: Tsai-Lenz
+    sample_count: 10
+    calibrated_transform: iiwa7_link_0 -> lucid_triton_color_optical_frame
 
   - name: triton_to_panda_base_calibration
     parent: lucid_triton_color_optical_frame
     child: panda_link0
-    translation_xyz_m: [-0.69437679, 0.11547400, 0.79943691]
-    quaternion_xyzw: [0.93696988, 0.00547817, -0.01887198, 0.34885711]
+    translation_xyz_m: [-0.30228667, -0.17465263, 1.47430243]
+    quaternion_xyzw: [0.64720492, 0.62833202, -0.32084623, 0.28876004]
 
   - name: kuka_d455_handeye_tf
     parent: iiwa7_link_ee

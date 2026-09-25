@@ -22,20 +22,22 @@ def generate_launch_description():
                 -0.2837929078727779, 0.6572983279877153),
                'panda_link8', 'panda_d455_link'),
         # Frozen snapshot: table AprilTag is the temporary world origin.
-        # Frozen table-tag snapshot: world is the current tag reference.
-        static('world_to_triton_snapshot', (0.098, -0.615, 0.665),
-               (-0.931, 0.008, 0.023, 0.364), 'world',
+        # Snapshot taken from the current Lucid camera -> tag24 measurement;
+        # this places tag24 at the world origin without giving the tag a
+        # second TF parent.
+        static('world_to_triton_snapshot', (0.48742056, -0.02957435, 0.76378568),
+               (0.66195830, 0.60796170, -0.30698066, -0.31298028), 'world',
                'lucid_triton_color_optical_frame'),
-        # Inverse of the saved Easy Hand-Eye result so the fixed Lucid camera
-        # remains the single parent of both robot bases in the world TF tree.
+        # Inverse of the latest Easy Hand-Eye eye-on-base result:
+        # lucid_triton_color_optical_frame -> iiwa7_link_0.
         static('triton_to_kuka_base_calibration',
-               (-0.19753837, -0.61974747, 1.44356388),
-               (-0.64941709, -0.66851211, 0.26902736, -0.24284415),
+               (0.85142967, 0.10649739, 1.18792187),
+               (0.03935360, 0.87338426, -0.48511301, -0.01779319),
                'lucid_triton_color_optical_frame', 'iiwa7_link_0'),
         # Panda fixed-camera calibration (inverse of panda_link0 -> Triton).
         static('triton_to_panda_base_calibration',
-               (-0.69437679, 0.11547400, 0.79943691),
-               (0.93696988, 0.00547817, -0.01887198, 0.34885711),
+               (-0.28479401, -0.07484101, 1.57058245),
+               (0.63645226, 0.60578425, -0.33881138, 0.33639383),
                'lucid_triton_color_optical_frame', 'panda_link0'),
         # KUKA D455 eye-in-hand calibration. The camera driver owns
         # kuka_d455_link -> kuka_d455_color_optical_frame, so attach the
