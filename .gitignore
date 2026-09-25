@@ -15,9 +15,9 @@
 /*.pdf
 /calibration_data/
 /teach_data/
+/record_dataset/
 
 # Local/editor files
 .DS_Store
 .vscode/
 .idea/
-
